@@ -1,43 +1,53 @@
 let startX = 0;
 let currentX = 0;
-let threshold = 100; // khoảng cách cần để chuyển trang
-let banner = document.querySelector(".banner-container");
+let threshold = 100; // khoảng cách tối thiểu để chuyển trang
+let isDragging = false;
+let page = document.documentElement; // lấy cả html (bao trùm toàn trang)
 
-document.addEventListener("touchstart", (e) => {
-  startX = e.touches[0].clientX;
+function startDrag(x) {
+  startX = x;
   currentX = startX;
-});
+  isDragging = true;
+  page.style.transition = ""; // bỏ transition khi đang kéo
+}
 
-document.addEventListener("touchmove", (e) => {
-  currentX = e.touches[0].clientX;
+function moveDrag(x) {
+  if (!isDragging) return;
+  currentX = x;
   let translateX = Math.max(0, currentX - startX);
-  // chỉ cho phép kéo sang phải, không kéo sang trái
-  banner.style.transform = `translateX(${translateX}px)`;
-});
+  page.style.transform = `translateX(${translateX}px)`;
+}
 
-document.addEventListener("touchend", () => {
+function endDrag() {
+  if (!isDragging) return;
+  isDragging = false;
+
   let distance = currentX - startX;
 
   if (distance > threshold) {
-    // Animate mượt ra ngoài màn hình rồi chuyển trang
-    banner.style.transition = "transform 0.3s ease-out";
-    banner.style.transform = "translateX(100vw)";
-
-    setTimeout(() => {
-      window.location.href = "order.html";
-    }, 300);
+    // Kéo đủ xa -> trượt hẳn ra ngoài rồi navigate
+    page.style.transition = "transform 0.3s ease-out";
+    page.style.transform = "translateX(100vw)";
+    page.addEventListener(
+      "transitionend",
+      () => {
+        window.location.href = "order.html";
+      },
+      { once: true }
+    );
   } else {
-    // Quay lại chỗ cũ
-    banner.style.transition = "transform 0.3s ease-out";
-    banner.style.transform = "translateX(0)";
+    // Kéo chưa đủ -> trả về chỗ cũ
+    page.style.transition = "transform 0.3s ease-out";
+    page.style.transform = "translateX(0)";
   }
+}
 
-  // reset sau khi transition xong
-  banner.addEventListener(
-    "transitionend",
-    () => {
-      banner.style.transition = "";
-    },
-    { once: true }
-  );
-});
+// --- Touch (mobile) ---
+document.addEventListener("touchstart", (e) => startDrag(e.touches[0].clientX));
+document.addEventListener("touchmove", (e) => moveDrag(e.touches[0].clientX));
+document.addEventListener("touchend", endDrag);
+
+// --- Mouse (PC) ---
+document.addEventListener("mousedown", (e) => startDrag(e.clientX));
+document.addEventListener("mousemove", (e) => moveDrag(e.clientX));
+document.addEventListener("mouseup", endDrag);

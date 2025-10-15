@@ -160,14 +160,12 @@
             velocity *= 0.94;
 
             if (menu.scrollLeft < 0) {
-                // đàn hồi trái
                 menu.scrollLeft = 0;
                 return bounceEffect('left');
             }
 
             const maxScroll = menu.scrollWidth - menu.clientWidth;
             if (menu.scrollLeft > maxScroll) {
-                // đàn hồi phải
                 menu.scrollLeft = maxScroll;
                 return bounceEffect('right');
             }
@@ -185,9 +183,7 @@
             function bounce() {
                 menu.scrollLeft += amplitude * direction;
                 amplitude *= -0.4;
-                if (Math.abs(amplitude) > 1) {
-                    requestAnimationFrame(bounce);
-                }
+                if (Math.abs(amplitude) > 1) requestAnimationFrame(bounce);
             }
             requestAnimationFrame(bounce);
         }
@@ -254,7 +250,6 @@
         // Active item click
         items.forEach(item => {
             item.addEventListener('click', () => {
-                // Không đàn hồi khi click
                 stopMomentum();
                 document.querySelector('.active-item')?.classList.remove('active-item');
                 item.classList.add('active-item');

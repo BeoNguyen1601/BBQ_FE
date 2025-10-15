@@ -153,6 +153,9 @@
         const items = document.querySelectorAll('.menu-item');
         const content = document.getElementById('content');
 
+        // **Hằng số Tốc độ Tối đa**
+        const MAX_VELOCITY = 1000; // Có thể điều chỉnh, giá trị lớn hơn cho tốc độ nhanh hơn
+
         let isDragging = false;
         let startX = 0, scrollStart = 0, velocity = 0, lastX = 0, lastTime = 0;
         let momentumFrame;
@@ -201,6 +204,10 @@
             const now = Date.now();
             const dt = now - lastTime;
             if (dt > 0) velocity = (x - lastX) / dt * 20;
+
+            // **GIỚI HẠN TỐC ĐỘ (Mouse)**
+            velocity = Math.max(-MAX_VELOCITY, Math.min(velocity, MAX_VELOCITY));
+
             lastX = x;
             lastTime = now;
         });
@@ -215,17 +222,19 @@
             lastTime = Date.now();
         });
 
-        // Sự kiện Touchmove
         menu.addEventListener('touchmove', e => {
             if (!isDragging) return;
             const x = e.touches[0].pageX;
             const dx = x - startX;
-            menu.scrollLeft = scrollStart - dx; // <-- Cuộn ngang tùy chỉnh
+            menu.scrollLeft = scrollStart - dx;
 
             const now = Date.now();
             const dt = now - lastTime;
-            // Tính toán velocity để tạo hiệu ứng momentum sau khi thả tay
             if (dt > 0) velocity = (x - lastX) / dt * 20;
+
+            // **GIỚI HẠN TỐC ĐỘ (Touch)**
+            velocity = Math.max(-MAX_VELOCITY, Math.min(velocity, MAX_VELOCITY));
+
             lastX = x;
             lastTime = now;
         });
@@ -242,6 +251,12 @@
                 document.querySelector('.active-item')?.classList.remove('active-item');
                 item.classList.add('active-item');
                 content.textContent = item.dataset.content;
+
+                // Cuộn item đã chọn vào giữa (optional)
+                item.scrollIntoView({
+                    behavior: 'smooth',
+                    inline: 'center'
+                });
             });
         });
     </script>

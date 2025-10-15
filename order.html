@@ -64,6 +64,18 @@
                 transform: translateX(0);
             }
         }
+
+        html,
+        body {
+            overscroll-behavior-x: contain;
+            overscroll-behavior-y: contain;
+        }
+
+        .menu-container {
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            overscroll-behavior: none;
+        }
     </style>
 </head>
 
@@ -131,10 +143,6 @@
         </div>
     </div>
     <script>
-        const params = new URLSearchParams(window.location.search);
-        const idTable = params.get("idTable");
-        document.getElementById("number-table").textContent = idTable;
-
         const menu = document.getElementById('menuContainer');
         const items = document.querySelectorAll('.menu-item');
         const content = document.getElementById('content');
@@ -149,28 +157,42 @@
 
         function momentumScroll() {
             menu.scrollLeft -= velocity;
-            velocity *= 0.95;
+            velocity *= 0.94;
 
-            if (menu.scrollLeft <= 0) {
-                bounce('left');
-                return;
+            if (menu.scrollLeft < 0) {
+                // đàn hồi trái
+                menu.scrollLeft = 0;
+                return bounceEffect('left');
             }
-            if (menu.scrollLeft >= menu.scrollWidth - menu.clientWidth - 1) {
-                bounce('right');
-                return;
+
+            const maxScroll = menu.scrollWidth - menu.clientWidth;
+            if (menu.scrollLeft > maxScroll) {
+                // đàn hồi phải
+                menu.scrollLeft = maxScroll;
+                return bounceEffect('right');
             }
+
             if (Math.abs(velocity) > 0.5) {
                 momentumFrame = requestAnimationFrame(momentumScroll);
             }
         }
 
-        function bounce(direction) {
-            menu.style.setProperty('--bounce-dir', direction === 'left' ? '15px' : '-15px');
-            menu.classList.add('bounce');
-            setTimeout(() => menu.classList.remove('bounce'), 400);
+        function bounceEffect(side) {
+            const strength = 20;
+            const direction = side === 'left' ? 1 : -1;
+            let amplitude = strength;
+
+            function bounce() {
+                menu.scrollLeft += amplitude * direction;
+                amplitude *= -0.4;
+                if (Math.abs(amplitude) > 1) {
+                    requestAnimationFrame(bounce);
+                }
+            }
+            requestAnimationFrame(bounce);
         }
 
-        // Mouse
+        // Mouse events
         menu.addEventListener('mousedown', e => {
             isDragging = true;
             stopMomentum();
@@ -201,7 +223,7 @@
             lastTime = now;
         });
 
-        // Touch
+        // Touch events
         menu.addEventListener('touchstart', e => {
             stopMomentum();
             isDragging = true;
@@ -229,9 +251,11 @@
             momentumScroll();
         });
 
-        // Click đổi nội dung
+        // Active item click
         items.forEach(item => {
             item.addEventListener('click', () => {
+                // Không đàn hồi khi click
+                stopMomentum();
                 document.querySelector('.active-item')?.classList.remove('active-item');
                 item.classList.add('active-item');
                 content.textContent = item.dataset.content;

@@ -159,33 +159,13 @@
             menu.scrollLeft -= velocity;
             velocity *= 0.94;
 
-            if (menu.scrollLeft < 0) {
-                menu.scrollLeft = 0;
-                return bounceEffect('left');
-            }
-
             const maxScroll = menu.scrollWidth - menu.clientWidth;
-            if (menu.scrollLeft > maxScroll) {
-                menu.scrollLeft = maxScroll;
-                return bounceEffect('right');
-            }
+            if (menu.scrollLeft < 0) menu.scrollLeft = 0;
+            if (menu.scrollLeft > maxScroll) menu.scrollLeft = maxScroll;
 
             if (Math.abs(velocity) > 0.5) {
                 momentumFrame = requestAnimationFrame(momentumScroll);
             }
-        }
-
-        function bounceEffect(side) {
-            const strength = 20;
-            const direction = side === 'left' ? 1 : -1;
-            let amplitude = strength;
-
-            function bounce() {
-                menu.scrollLeft += amplitude * direction;
-                amplitude *= -0.4;
-                if (Math.abs(amplitude) > 1) requestAnimationFrame(bounce);
-            }
-            requestAnimationFrame(bounce);
         }
 
         // Mouse events

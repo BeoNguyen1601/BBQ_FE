@@ -8,6 +8,19 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <title>Menu Bottom Smooth Swipe</title>
     <style>
+        /* Trong CSS */
+        html,
+        body {
+            overscroll-behavior-x: contain;
+            overscroll-behavior-y: contain;
+        }
+
+        .menu-container {
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+            overscroll-behavior: none;
+        }
+
         .no-scrollbar::-webkit-scrollbar {
             display: none;
         }
@@ -63,18 +76,6 @@
             100% {
                 transform: translateX(0);
             }
-        }
-
-        html,
-        body {
-            overscroll-behavior-x: contain;
-            overscroll-behavior-y: contain;
-        }
-
-        .menu-container {
-            overflow-x: hidden;
-            scroll-behavior: smooth;
-            overscroll-behavior: none;
         }
     </style>
 </head>
@@ -209,14 +210,16 @@
             lastTime = Date.now();
         });
 
+        // Sự kiện Touchmove
         menu.addEventListener('touchmove', e => {
             if (!isDragging) return;
             const x = e.touches[0].pageX;
             const dx = x - startX;
-            menu.scrollLeft = scrollStart - dx;
+            menu.scrollLeft = scrollStart - dx; // <-- Cuộn ngang tùy chỉnh
 
             const now = Date.now();
             const dt = now - lastTime;
+            // Tính toán velocity để tạo hiệu ứng momentum sau khi thả tay
             if (dt > 0) velocity = (x - lastX) / dt * 20;
             lastX = x;
             lastTime = now;

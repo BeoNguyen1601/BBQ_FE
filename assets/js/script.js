@@ -25,13 +25,16 @@ function endDrag() {
   let distance = currentX - startX;
 
   if (distance > threshold) {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get("id");
+
     // Kéo đủ xa -> trượt hẳn ra ngoài rồi navigate
     page.style.transition = "transform 0.3s ease-out";
     page.style.transform = "translateX(100vw)";
     page.addEventListener(
       "transitionend",
       () => {
-        window.location.href = "order.html";
+        window.location.href = "order.html?idTable=" + id;
       },
       { once: true }
     );

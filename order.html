@@ -1,14 +1,243 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <title>Menu Bottom Smooth Swipe</title>
+    <style>
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .menu-container {
+            scroll-behavior: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .menu-item {
+            flex: 0 0 25%;
+            text-align: center;
+            transition: all 0.25s ease;
+        }
+
+        .active-item {
+            color: #2563eb;
+            transform: scale(1.1);
+            font-weight: bold;
+        }
+
+        .dragging {
+            cursor: grabbing;
+            user-select: none;
+        }
+
+        .bounce {
+            animation: bounceEffect 0.4s ease;
+        }
+
+        @keyframes bounceEffect {
+            0% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(var(--bounce-dir, 0));
+            }
+
+            50% {
+                transform: translateX(0);
+            }
+
+            75% {
+                transform: translateX(calc(var(--bounce-dir, 0) / 2));
+            }
+
+            100% {
+                transform: translateX(0);
+            }
+        }
+    </style>
 </head>
 
-<body>
-    <h1>Order here !</h1>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+    <!-- HEADER -->
+    <header
+        class="relative w-full bg-gradient-to-r from-blue-500 to-indigo-500 text-white shadow-md flex items-center justify-between px-5 py-3">
+        <!-- Logo & tên quán -->
+        <div class="flex items-center space-x-2">
+            <div class="bg-white/20 p-2 rounded-xl backdrop-blur-md">
+                <i class="fa-solid fa-fire-flame-curved text-lg"></i>
+            </div>
+            <h1 class="text-lg font-bold tracking-wide drop-shadow-sm"></h1>
+        </div>
+        <!-- Số bàn căn giữa -->
+        <div
+            class="absolute left-1/2 -translate-x-1/2 bg-white text-blue-600 px-5 py-1.5 rounded-full shadow font-bold text-sm border border-white/40">
+            Bàn <span id="number-table"></span> </div>
+        <!-- Icon chuông gọi món -->
+        <div class="relative cursor-pointer hover:scale-110 transition-transform duration-300">
+            <i class="fa-solid fa-bell-concierge text-2xl"></i>
+            <span
+                class="absolute -top-1 -right-2 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                3 </span>
+        </div>
+    </header>
+    <!-- Nội dung -->
+    <main id="content"
+        class="flex-1 flex items-center justify-center text-2xl font-semibold transition-all duration-300 select-none">
+        🍤 Khai vị </main>
+    <!-- MENU -->
+    <div id="menuContainer"
+        class="menu-container fixed bottom-0 left-0 w-full bg-white shadow-lg flex overflow-x-auto no-scrollbar select-none border-t border-gray-200">
+        <div class="menu-item py-3 active-item" data-content="🍤 Khai vị">
+            <div class="text-2xl mb-1">🍤</div>
+            <span class="text-sm">Khai vị</span>
+        </div>
+        <div class="menu-item py-3" data-content="🔥 Món Nướng">
+            <div class="text-2xl mb-1">🔥</div>
+            <span class="text-sm">Nướng</span>
+        </div>
+        <div class="menu-item py-3" data-content="🥘 Món Lẩu">
+            <div class="text-2xl mb-1">🥘</div>
+            <span class="text-sm">Lẩu</span>
+        </div>
+        <div class="menu-item py-3" data-content="🍣 Sushi">
+            <div class="text-2xl mb-1">🍣</div>
+            <span class="text-sm">Sushi</span>
+        </div>
+        <div class="menu-item py-3" data-content="🍱 Cơm hộp">
+            <div class="text-2xl mb-1">🍱</div>
+            <span class="text-sm">Cơm hộp</span>
+        </div>
+        <div class="menu-item py-3" data-content="🍰 Tráng miệng">
+            <div class="text-2xl mb-1">🍰</div>
+            <span class="text-sm">Tráng miệng</span>
+        </div>
+        <div class="menu-item py-3" data-content="🥤 Đồ uống">
+            <div class="text-2xl mb-1">🥤</div>
+            <span class="text-sm">Đồ uống</span>
+        </div>
+        <div class="menu-item py-3" data-content="🍡 Ăn vặt">
+            <div class="text-2xl mb-1">🍡</div>
+            <span class="text-sm">Ăn vặt</span>
+        </div>
+    </div>
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const idTable = params.get("idTable");
+        document.getElementById("number-table").textContent = idTable;
+
+        const menu = document.getElementById('menuContainer');
+        const items = document.querySelectorAll('.menu-item');
+        const content = document.getElementById('content');
+
+        let isDragging = false;
+        let startX = 0, scrollStart = 0, velocity = 0, lastX = 0, lastTime = 0;
+        let momentumFrame;
+
+        function stopMomentum() {
+            cancelAnimationFrame(momentumFrame);
+        }
+
+        function momentumScroll() {
+            menu.scrollLeft -= velocity;
+            velocity *= 0.95;
+
+            if (menu.scrollLeft <= 0) {
+                bounce('left');
+                return;
+            }
+            if (menu.scrollLeft >= menu.scrollWidth - menu.clientWidth - 1) {
+                bounce('right');
+                return;
+            }
+            if (Math.abs(velocity) > 0.5) {
+                momentumFrame = requestAnimationFrame(momentumScroll);
+            }
+        }
+
+        function bounce(direction) {
+            menu.style.setProperty('--bounce-dir', direction === 'left' ? '15px' : '-15px');
+            menu.classList.add('bounce');
+            setTimeout(() => menu.classList.remove('bounce'), 400);
+        }
+
+        // Mouse
+        menu.addEventListener('mousedown', e => {
+            isDragging = true;
+            stopMomentum();
+            startX = e.pageX;
+            scrollStart = menu.scrollLeft;
+            lastX = startX;
+            lastTime = Date.now();
+            menu.classList.add('dragging');
+        });
+
+        window.addEventListener('mouseup', () => {
+            if (!isDragging) return;
+            isDragging = false;
+            menu.classList.remove('dragging');
+            momentumScroll();
+        });
+
+        window.addEventListener('mousemove', e => {
+            if (!isDragging) return;
+            const x = e.pageX;
+            const dx = x - startX;
+            menu.scrollLeft = scrollStart - dx;
+
+            const now = Date.now();
+            const dt = now - lastTime;
+            if (dt > 0) velocity = (x - lastX) / dt * 20;
+            lastX = x;
+            lastTime = now;
+        });
+
+        // Touch
+        menu.addEventListener('touchstart', e => {
+            stopMomentum();
+            isDragging = true;
+            startX = e.touches[0].pageX;
+            scrollStart = menu.scrollLeft;
+            lastX = startX;
+            lastTime = Date.now();
+        });
+
+        menu.addEventListener('touchmove', e => {
+            if (!isDragging) return;
+            const x = e.touches[0].pageX;
+            const dx = x - startX;
+            menu.scrollLeft = scrollStart - dx;
+
+            const now = Date.now();
+            const dt = now - lastTime;
+            if (dt > 0) velocity = (x - lastX) / dt * 20;
+            lastX = x;
+            lastTime = now;
+        });
+
+        menu.addEventListener('touchend', () => {
+            isDragging = false;
+            momentumScroll();
+        });
+
+        // Click đổi nội dung
+        items.forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelector('.active-item')?.classList.remove('active-item');
+                item.classList.add('active-item');
+                content.textContent = item.dataset.content;
+            });
+        });
+    </script>
 </body>
 
 </html>
